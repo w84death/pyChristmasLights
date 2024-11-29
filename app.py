@@ -8,21 +8,27 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 class LightBulb(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(LightBulb, self).__init__(parent)
-        self.setFixedSize(18, 18)
+        self.setFixedSize(18, 24)  # Adjusted size to be oval
         self.color = QtCore.Qt.black
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        
+        # Draw the oval bulb
         painter.setBrush(QtGui.QBrush(self.color))
         painter.setPen(QtCore.Qt.NoPen)
-        painter.drawEllipse(0, 0, self.width(), self.height())
+        painter.drawEllipse(0, 6, self.width(), self.height() - 6)  # Adjusted to be oval
 
-        gradient = QtGui.QRadialGradient(self.width() / 2, self.height() / 2, self.width() / 2)
+        gradient = QtGui.QRadialGradient(self.width() / 2, self.height() / 2 + 6, self.width() / 2)
         gradient.setColorAt(0, QtGui.QColor(255, 255, 255, 150))
         gradient.setColorAt(1, QtCore.Qt.transparent)
         painter.setBrush(QtGui.QBrush(gradient))
-        painter.drawEllipse(0, 0, self.width(), self.height())
+        painter.drawEllipse(0, 6, self.width(), self.height() - 6)  # Adjusted to be oval
+
+        # Draw the black rectangle on top
+        painter.setBrush(QtGui.QBrush(QtCore.Qt.black))
+        painter.drawRect(6, 0, 6, 6)  # Rectangle on top to simulate bulb connection
 
     def set_color(self, color):
         self.color = color
@@ -53,14 +59,15 @@ class ChristmasLights(QtWidgets.QWidget):
 
         # Load patterns from JSON
         self.patterns = self.load_patterns()
-        self.current_pattern_index = 0
+        self.current_pattern_index = 1
         self.current_shift = 0
 
     def load_patterns(self):
         patterns_json = '''
         [
             {"pattern": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1], "interval": 500},
-            {"pattern": [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4], "interval": 500}
+            {"pattern": [0, 1, 2, 3, 4, 3, 2, 1, 0, 1, 2, 3, 4, 3, 2, 1, 0, 1, 2, 3], "interval": 500},
+            {"pattern": [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2], "interval": 500}
         ]
         '''
         return json.loads(patterns_json)
@@ -71,9 +78,9 @@ class ChristmasLights(QtWidgets.QWidget):
         colors = [
             QtGui.QColor(255, 16, 16, 255), 
             QtGui.QColor(16, 255, 16, 255),
-            QtGui.QColor(16, 16, 255, 255),
+            QtGui.QColor(24, 24, 255, 255),
             QtGui.QColor(255, 255, 16, 255),
-            QtGui.QColor(16, 255, 255, 255),
+            QtGui.QColor(24, 255, 255, 255),
         ]
         for i, light in enumerate(self.lights):
             light.set_color(colors[shifted_pattern[i]])
