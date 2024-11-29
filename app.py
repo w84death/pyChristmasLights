@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 class LightBulb(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(LightBulb, self).__init__(parent)
-        self.setFixedSize(20, 20)
+        self.setFixedSize(18, 18)
         self.color = QtCore.Qt.red
 
     def paintEvent(self, event):
@@ -17,11 +17,10 @@ class LightBulb(QtWidgets.QWidget):
 
         # Add glow effect
         glow_color = QtGui.QColor(self.color)
-        glow_color.setAlpha(100)
+        glow_color.setAlpha(50)
         painter.setBrush(QtGui.QBrush(glow_color))
         painter.drawEllipse(-5, -5, self.width() + 10, self.height() + 10)
 
-        # Add inset shadow to simulate reflection
         gradient = QtGui.QRadialGradient(self.width() / 2, self.height() / 2, self.width() / 2)
         gradient.setColorAt(0, QtGui.QColor(255, 255, 255, 150))
         gradient.setColorAt(1, QtCore.Qt.transparent)
@@ -44,10 +43,13 @@ class ChristmasLights(QtWidgets.QWidget):
         self.timer.start(500)
         self.dragging = False
         self.drag_position = None
+        self.click_position = None
+        self.click_threshold = 5  # pixels
 
         # Load patterns from JSON
         self.patterns = self.load_patterns()
         self.current_pattern_index = 1
+        self.current_shift = 0
 
     def load_patterns(self):
         patterns_json = '''
@@ -59,32 +61,23 @@ class ChristmasLights(QtWidgets.QWidget):
         return json.loads(patterns_json)
 
     def update_lights(self):
-        pattern = self.patterns[self.current_pattern_index]["pattern"]
+        base_pattern = self.patterns[self.current_pattern_index]["pattern"]
+        shifted_pattern = base_pattern[self.current_shift:] + base_pattern[:self.current_shift]
         colors = [
             QtGui.QColor(255, 16, 16, 255), 
             QtGui.QColor(16, 255, 16, 255),
             QtGui.QColor(16, 16, 255, 255),
             QtGui.QColor(255, 255, 16, 255),
-            QtGui.QColor(16, 255, 255, 255),]
+            QtGui.QColor(16, 255, 255, 255),
+        ]
         for i, light in enumerate(self.lights):
-            light.set_color(colors[pattern[i]])
-        self.current_pattern_index = (self.current_pattern_index + 1) % len(self.patterns)
+            light.set_color(colors[shifted_pattern[i]])
+        self.current_shift = (self.current_shift + 1) % len(base_pattern)
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
             QtWidgets.qApp.quit()
-        elif event.button() == QtCore.Qt.LeftButton:
-            self.dragging = True
-            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
-
-    def mouseMoveEvent(self, event):
-        if self.dragging:
-            self.move(event.globalPos() - self.drag_position)
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self.dragging = False
-
+      
     def paintEvent(self, event):
         for i, light in enumerate(self.lights):
             light.move(i * 40, 40)
