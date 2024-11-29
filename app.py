@@ -6,7 +6,7 @@ class LightBulb(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(LightBulb, self).__init__(parent)
         self.setFixedSize(18, 18)
-        self.color = QtCore.Qt.red
+        self.color = QtCore.Qt.black
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
@@ -14,12 +14,6 @@ class LightBulb(QtWidgets.QWidget):
         painter.setBrush(QtGui.QBrush(self.color))
         painter.setPen(QtCore.Qt.NoPen)
         painter.drawEllipse(0, 0, self.width(), self.height())
-
-        # Add glow effect
-        glow_color = QtGui.QColor(self.color)
-        glow_color.setAlpha(50)
-        painter.setBrush(QtGui.QBrush(glow_color))
-        painter.drawEllipse(-5, -5, self.width() + 10, self.height() + 10)
 
         gradient = QtGui.QRadialGradient(self.width() / 2, self.height() / 2, self.width() / 2)
         gradient.setColorAt(0, QtGui.QColor(255, 255, 255, 150))
@@ -34,21 +28,21 @@ class LightBulb(QtWidgets.QWidget):
 class ChristmasLights(QtWidgets.QWidget):
     def __init__(self):
         super(ChristmasLights, self).__init__()
-        self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.X11BypassWindowManagerHint)
+        self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        self.setGeometry(100, 0, 800, 100)
+        screen = QtWidgets.QApplication.primaryScreen()
+        screen_geometry = screen.availableGeometry()
+        self.setGeometry(screen_geometry.x(), screen_geometry.y(), 800, 24)
         self.lights = [LightBulb(self) for _ in range(20)]
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_lights)
         self.timer.start(500)
         self.dragging = False
         self.drag_position = None
-        self.click_position = None
-        self.click_threshold = 5  # pixels
 
         # Load patterns from JSON
         self.patterns = self.load_patterns()
-        self.current_pattern_index = 1
+        self.current_pattern_index = 0
         self.current_shift = 0
 
     def load_patterns(self):
@@ -77,10 +71,21 @@ class ChristmasLights(QtWidgets.QWidget):
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
             QtWidgets.qApp.quit()
-      
+        elif event.button() == QtCore.Qt.LeftButton:
+            self.dragging = True
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+
+    def mouseMoveEvent(self, event):
+        if self.dragging:
+            self.move(event.globalPos() - self.drag_position)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.dragging = False
+
     def paintEvent(self, event):
         for i, light in enumerate(self.lights):
-            light.move(i * 40, 40)
+            light.move(i * 40, 0)
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
