@@ -59,22 +59,26 @@ class ChristmasLights(QtWidgets.QWidget):
 
         # Load patterns from JSON
         self.patterns = self.load_patterns()
-        self.current_pattern_index = 1
+        self.current_pattern_index = 0
         self.current_shift = 0
+
+        self.pattern_change_timer = QtCore.QTimer(self)
+        self.pattern_change_timer.timeout.connect(self.change_pattern)
+        self.pattern_change_timer.start(15000)  # Change pattern every 15 seconds
 
     def load_patterns(self):
         patterns_json = '''
         [
-            {"pattern": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1], "interval": 500},
-            {"pattern": [0, 1, 2, 3, 4, 3, 2, 1, 0, 1, 2, 3, 4, 3, 2, 1, 0, 1, 2, 3], "interval": 500},
-            {"pattern": [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2], "interval": 500}
+            {"pattern": [0, 1], "interval": 500},
+            {"pattern": [0, 1, 2, 3, 4, 3, 2, 1], "interval": 500},
+            {"pattern": [2, 2, 3], "interval": 500}
         ]
         '''
         return json.loads(patterns_json)
 
     def update_lights(self):
         base_pattern = self.patterns[self.current_pattern_index]["pattern"]
-        shifted_pattern = base_pattern[self.current_shift:] + base_pattern[:self.current_shift]
+        pattern_length = len(base_pattern)
         colors = [
             QtGui.QColor(255, 16, 16, 255), 
             QtGui.QColor(16, 255, 16, 255),
@@ -83,8 +87,13 @@ class ChristmasLights(QtWidgets.QWidget):
             QtGui.QColor(24, 255, 255, 255),
         ]
         for i, light in enumerate(self.lights):
-            light.set_color(colors[shifted_pattern[i]])
-        self.current_shift = (self.current_shift + 1) % len(base_pattern)
+            pattern_index = (self.current_shift + i) % pattern_length
+            light.set_color(colors[base_pattern[pattern_index]])
+        self.current_shift = (self.current_shift + 1) % pattern_length
+
+    def change_pattern(self):
+        self.current_pattern_index = (self.current_pattern_index + 1) % len(self.patterns)
+        self.current_shift = 0
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
