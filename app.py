@@ -1,3 +1,6 @@
+import os
+if 'WAYLAND_DISPLAY' in os.environ:
+    os.environ["QT_QPA_PLATFORM"] = "xcb"
 import sys
 import json
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -28,11 +31,19 @@ class LightBulb(QtWidgets.QWidget):
 class ChristmasLights(QtWidgets.QWidget):
     def __init__(self):
         super(ChristmasLights, self).__init__()
-        self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            QtCore.Qt.FramelessWindowHint |
+            QtCore.Qt.WindowStaysOnTopHint  |
+            QtCore.Qt.X11BypassWindowManagerHint
+        )
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         screen = QtWidgets.QApplication.primaryScreen()
         screen_geometry = screen.availableGeometry()
-        self.setGeometry(screen_geometry.x(), screen_geometry.y(), 800, 24)
+        window_width = 800
+        window_height = 24
+        x = (screen_geometry.width() - window_width) // 2
+        y = 0
+        self.setGeometry(x, y, window_width, window_height)
         self.lights = [LightBulb(self) for _ in range(20)]
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_lights)
